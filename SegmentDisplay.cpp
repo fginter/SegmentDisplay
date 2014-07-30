@@ -1,12 +1,16 @@
-#include "SevenSegmentDisplay.h"
+#include <Arduino.h>
+#include "SegmentDisplay.h"
 char SevenSegmentDisplay::digitChars[10]={0b11111100,0b01100000,0b11011010,0b11110010,0b01100110,
                                       0b10110110,0b10111110,0b11100000,0b11111110,0b11100110};
 
-SevenSegmentDisplay::SevenSegmentDisplay(unsigned char digitCount) {
+SevenSegmentDisplay::SevenSegmentDisplay(unsigned char digitCount, int *outputSegmentPins, int *outputDigitPins) {
   this->digitCount=digitCount;
   this->displayDigits=new char[digitCount];
-  this->displayDigits=new char[digitCount];
-  this->nextDigit=0;
+  for (int i=0; i<8; i++) this->outputSegmentPins[i]=outputSegmentPins[i];
+  this->outputDigitPins=new int[digitCount];
+  for (int i=0; i<digitCount; i++) this->outputDigitPins[i]=outputDigitPins[i];
+  this->currentDigit=0;
+  this->valueForDigitON=LOW;
 }
 
 SevenSegmentDisplay::~SevenSegmentDisplay() {
@@ -18,27 +22,27 @@ void SevenSegmentDisplay::setValue(int v) {
     this->displayDigits[idx]=this->digitChars[v%10];
     v/=10;
   }
-  this->nextDigit=0;
+  this->currentDigit=0;
 }
 
 void SevenSegmentDisplay::setValue(float v) {
 }
 
 void SevenSegmentDisplay::update() {
-  digitalWrite(this->digitPins[this->currentDigit],~this->valueForDigitON); //Turn the current digit off
+  digitalWrite(this->outputDigitPins[this->currentDigit],~this->valueForDigitON); //Turn the current digit off
   (++this->currentDigit)%=this->digitCount;
   char digit=this->displayDigits[this->currentDigit];
   for (i=0; i<8; i++) {
     if (this->outputPins[i]<0) 
       continue;
     if (digit & 1<<i) {
-      digitalWrite(this->segmentPins[i],this->valueForSegmentON);
+      digitalWrite(this->outputSegmentPins[i],this->valueForSegmentON);
     }
     else {
-      digitalWrite(this->segmentPins[i],~this->valueForSegmentON);
+      digitalWrite(this->outputSegmentPins[i],~this->valueForSegmentON);
     }
   }
-  digitalWrite(this->digitPins[this->currentDigit],this->valueForDigitON);
+  digitalWrite(this->outputDigitPins[this->currentDigit],this->valueForDigitON);
 }
 
 
